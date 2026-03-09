@@ -10,9 +10,11 @@ os.add_dll_directory(vipsbin)  # ← clé pour Python 3.8+
 
 import pyvips  # seulement APRÈS les lignes ci-dessus
 
-def png_to_svs(input_png, output_svs):
+def png_to_svs(input_png, output_svs, mpp=0.25):
     # Charger l'image PNG
     image = pyvips.Image.new_from_file(input_png, access="sequential")
+    
+    pixels_per_cm = 10000.0 / mpp  # mpp=0.25 → 40x, mpp=0.5 → 20x
 
     # Sauvegarder en TIFF pyramidal compatible SVS
     image.tiffsave(
@@ -23,7 +25,10 @@ def png_to_svs(input_png, output_svs):
         pyramid=True,
         compression="jpeg",
         Q=90,
-        bigtiff=True
+        bigtiff=True,
+        xres=pixels_per_cm,
+        yres=pixels_per_cm,
+        resunit="cm"
     )
 
     print(f"Converti : {input_png} → {output_svs}")
@@ -43,7 +48,7 @@ for marker in type_tma:
         if file.lower().endswith(".png"):
             input_path = os.path.join(path, file)
             output_path = os.path.join(path, file.replace(".png", ".svs"))
-            png_to_svs(input_path, output_path)
+            png_to_svs(input_path, output_path, mpp=0.25)
 
 
 
