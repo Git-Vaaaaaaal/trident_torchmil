@@ -15,7 +15,7 @@ from trident.segmentation_models import segmentation_model_factory
 #variables
 list_markers = ["BCL2"] # "BCL2", "BCL6", "HE", "MUM1", "MYC"
 DEVICE = f"cuda:0" if torch.cuda.is_available() else "cpu"
-input_dir = ""
+input_dir = "pipe_trident_torchmil"
 output_dir = os.makedirs("extracted", exist_ok=True)
 verification = False
 
@@ -86,7 +86,7 @@ for marker in list_markers :
         device=DEVICE
         )
 
-
+print("feature extraction works")
 
 
 

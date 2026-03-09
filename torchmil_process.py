@@ -20,8 +20,8 @@ from csv_extractor import split_csv
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-TRIDENT_DIR = "/home/fran/data/datasets/CAMELYON16/trident_processed/20x_512px_0px_overlap/" # Path to the directory where TRIDENT will save the extracted patches and their corresponding feature vectors.
-TIFF_DIR = "" # Path to the directory where the original WSIs in TIFF format are stored.
+TRIDENT_DIR = "extracted" # Path to the directory where TRIDENT will save the extracted patches and their corresponding feature vectors.
+TIFF_DIR = "output_svs\\BCL2" # Path to the directory where the original WSIs in TIFF format are stored.
 
 def get_metrics(device):
     return {
@@ -40,18 +40,18 @@ patch_size = 512
 coords_dir = TRIDENT_DIR + "patches/"
 patch_labels_dir = TRIDENT_DIR + "patch_labels/"
 
-wsi_name = "test_016"
+""" wsi_name = "test_016"
 # wsi_name = "tumor_005"
 
 wsi_path = os.path.join(TIFF_DIR, wsi_name + ".tif")
 slide = openslide.OpenSlide(wsi_path)
 
 coords_path = os.path.join(coords_dir, wsi_name + "_patches.h5")
-inst_coords = h5py.File(coords_path, "r")["coords"][:]
+inst_coords = h5py.File(coords_path, "r")["coords"][:]ss
 
 patch_labels_path = os.path.join(patch_labels_dir, wsi_name + ".h5")
 patch_labels = h5py.File(patch_labels_path, "r")["patch_labels"][:]
-
+ """
 patch_labels_path = TRIDENT_DIR + "patch_labels/"
 feature_extractor = "conch_v15"
 
@@ -59,6 +59,7 @@ feature_extractor = "conch_v15"
 csv_path = "dataset_list.csv"
 dataset_csv = pd.read_csv(csv_path)
 
+print("Etape 01")
 
 #Seulement pour train sur BCL2 et titan
 marker_list = ["BCL2"]
@@ -82,6 +83,7 @@ train_wsis = pd.read_csv(train_labels_path)["wsi_name"].tolist()
 test_labels_path = "BCL2_test.csv"
 test_wsis = pd.read_csv(test_labels_path)["wsi_name"].tolist()
 
+print("Etape 02")
 
 #Classification binaire
 dataset_train = BinaryClassificationDataset(
@@ -124,6 +126,7 @@ test_dataloader = torch.utils.data.DataLoader(
     dataset_test, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
 )
 
+print("Etape 03")
 
 it = iter(train_dataloader)
 batch = next(it)
