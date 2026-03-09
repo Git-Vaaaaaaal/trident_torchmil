@@ -1,4 +1,4 @@
-torch
+torch>=2.0.0
 torchvision
 Pillow
 geopandas
@@ -8,10 +8,10 @@ h5py
 openslide-python
 opencv-python
 matplotlib
-numpy
-pandas
+numpy<2
+pandas==2.3.2
 tqdm
 torchmetrics
-scikit-learn
+scikit-learn==1.5.2
 torchmil
 trident-wsi
