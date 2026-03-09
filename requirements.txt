@@ -1,0 +1,17 @@
+torch
+torchvision
+Pillow
+geopandas
+ipython
+huggingface_hub
+h5py
+openslide-python
+opencv-python
+matplotlib
+numpy
+pandas
+tqdm
+torchmetrics
+scikit-learn
+torchmil
+trident-wsi
