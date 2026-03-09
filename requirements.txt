@@ -14,4 +14,3 @@ tqdm
 torchmetrics
 scikit-learn==1.5.2
 torchmil
-trident-wsi
