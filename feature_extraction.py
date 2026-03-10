@@ -29,14 +29,15 @@ list_mode = list(range(0, 7, 1))
 
 DEVICE = f"cuda:0" if torch.cuda.is_available() else "cpu"
 input_dir = "output_svs"
-output_dir = os.makedirs("extracted", exist_ok=True)
+output_dir = "extracted"
+os.makedirs(output_dir, exist_ok=True)
 verification = False
 
 # b. Create OpenSlideWSI
 for mode in list_mode :
     PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level = options(mode)
-    output_dir = os.path.join(output_dir, str(encoder))
-    os.makedirs(output_dir, exist_ok=True)
+    mode_dir = os.path.join(output_dir, str(encoder))
+    os.makedirs(mode_dir, exist_ok=True)
     for marker in list_markers :
         marker_path = os.path.join(input_dir, marker)
         TARGET_MAG = 20
@@ -60,7 +61,7 @@ for mode in list_mode :
                 gdf.head(n=10)
 
             # a. Run patch coordinate extraction
-            coords_output = os.path.join(output_dir, "coordinates")
+            coords_output = os.path.join(mode_dir, "coordinates")
             os.makedirs(coords_output, exist_ok=True)
             coords_output = os.path.join(coords_output, marker)
             os.makedirs(coords_output, exist_ok=True)
@@ -77,8 +78,10 @@ for mode in list_mode :
             encoder.to(DEVICE)
 
             # b. Run UNI feature extraction
-            patch_features_dir = os.path.join(output_dir, "patch_features_extraction")
+            patch_features_dir = os.path.join(mode_dir, "patch_features_extraction")
+            os.makedirs(patch_features_dir, exist_ok=True)
             patch_features_dir = os.path.join(patch_features_dir, marker)
+            os.makedirs(patch_features_dir, exist_ok=True)
 
             patch_feats_path = slide.extract_patch_features(
             patch_encoder=encoder, 
@@ -93,8 +96,10 @@ for mode in list_mode :
             encoder.to(DEVICE)
 
             # b. Run UNI feature extraction
-            slide_features_dir = os.path.join(output_dir, "slide_features_extraction")
+            slide_features_dir = os.path.join(mode_dir, "slide_features_extraction")
+            os.makedirs(slide_features_dir, exist_ok=True)
             slide_features_dir = os.path.join(slide_features_dir, marker)
+            os.makedirs(slide_features_dir, exist_ok=True)
 
             slide_feats_path = slide.extract_slide_features(
             patch_features_path=os.path.join(patch_features_dir, f"{patient_id}.h5"), #Attend un fichier H5, 
@@ -103,7 +108,7 @@ for mode in list_mode :
             device=DEVICE
             )
 
-print("feature extraction works")
+    print(f"feature extraction works for {marker}")
 
 
 

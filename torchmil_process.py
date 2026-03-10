@@ -52,6 +52,7 @@ inst_coords = h5py.File(coords_path, "r")["coords"][:]ss
 patch_labels_path = os.path.join(patch_labels_dir, wsi_name + ".h5")
 patch_labels = h5py.File(patch_labels_path, "r")["patch_labels"][:]
  """
+#Seulement pour patch ???
 patch_labels_path = TRIDENT_DIR + "patch_labels/"
 feature_extractor = "conch_v15"
 
@@ -76,11 +77,12 @@ train_csv = train_csv.drop(columns=list_rmv)
 test_csv = test_csv.drop(columns=list_rmv)
 #Fin spe BCL2 et Titan
 
-
-train_labels_path = "BCL2_train.csv"
+csv_path = "csv_torchmil"
+os.makedirs(csv_path, exist_ok=True)  #ajouter chemin en fonction des encoder (voir options_torchmil)
+train_labels_path = f"{csv_path}\\BCL2_train.csv"
 train_wsis = pd.read_csv(train_labels_path)["wsi_name"].tolist()
 
-test_labels_path = "BCL2_test.csv"
+test_labels_path = f"{csv_path}\\BCL2_test.csv"
 test_wsis = pd.read_csv(test_labels_path)["wsi_name"].tolist()
 
 print("Etape 02")
