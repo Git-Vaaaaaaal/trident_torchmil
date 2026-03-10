@@ -3,7 +3,6 @@ torchvision
 Pillow
 ipython
 huggingface_hub
-h5py==3.11.0
 openslide-python
 opencv-python
 matplotlib
