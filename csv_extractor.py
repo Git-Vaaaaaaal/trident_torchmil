@@ -29,7 +29,7 @@ annotation = "pipe_trident_torchmil\\annotations.csv"
 
 add_resultat_to_images(clinical_data, annotation, "pipe_trident_torchmil\\dataset_list.csv")
 
-def split_csv(input_path, output, marker_list, image_folder, random_seed=None):
+def split_csv(input_path, output, marker_list, image_folder, random_seed=None, save_csv=False):
     #input_path = dataframe
     df = input_path
 
@@ -58,12 +58,13 @@ def split_csv(input_path, output, marker_list, image_folder, random_seed=None):
         test_csv = df_shuffled.iloc[split_index:]
 
         # Sauvegarde CSV
-        output_path_80 = os.path.join(output, f"{marker}_train.csv")
-        output_path_20 = os.path.join(output, f"{marker}_test.csv")
-        
-        train_csv.to_csv(output_path_80, index=False)
-        test_csv.to_csv(output_path_20, index=False)
+        if save_csv == True :
+            output_path_80 = os.path.join(output, f"{marker}_train.csv")
+            output_path_20 = os.path.join(output, f"{marker}_test.csv")
+            
+            train_csv.to_csv(output_path_80, index=False)
+            test_csv.to_csv(output_path_20, index=False)
 
-        print(f"csv test {marker} créé : {output_path_80}")
-        print(f"csv train {marker} créé : {output_path_20}")
+        print(f"csv test {marker} créé")
+        print(f"csv train {marker} créé")
         return train_csv, test_csv
