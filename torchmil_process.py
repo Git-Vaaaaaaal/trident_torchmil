@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from torchmil.datasets import TridentWSIDataset, BinaryClassificationDataset
+from torchmil.datasets import TridentWSIDataset
+from model_mode import BinaryClassificationDataset #Binary class modifie
 from torchmil.data import collate_fn
 from torchmil.utils import Trainer
 from torchmil.models import ABMIL
@@ -52,30 +53,16 @@ def training_mil_model(marker, train_model, encoder=str, csv_dataset=str):
 
     train_csv = train_csv.drop(columns=list_rmv)
     test_csv = test_csv.drop(columns=list_rmv)
-    #Fin spe BCL2 et Titan
 
-    train_wsis = train_csv["wsi_name"].tolist()
-    test_wsis = test_csv["wsi_name"].tolist()
-
-    csv_path = "csv_torchmil"
-    os.makedirs(csv_path, exist_ok=True)  #ajouter chemin en fonction des encoder (voir options_torchmil)
-    train_labels_path = f"{csv_path}\\BCL2_train.csv"
-    train_wsis = pd.read_csv(train_labels_path)["wsi_name"].tolist()
-
-    test_labels_path = f"{csv_path}\\BCL2_test.csv"
-    test_wsis = pd.read_csv(test_labels_path)["wsi_name"].tolist()
-
-    print("Etape 02")
-
-    #Classification binaire
+    #Classification binaire : fonction modifie de torchmil
     dataset_train = BinaryClassificationDataset(
-        features_path="features/", #Mettre les features dans un dossier
-        labels_path=train_csv #Changer en un df avec seulement deux colonnes : bag_name et label
+        features_path=image_folder,
+        labels_path=train_csv,   # DataFrame directement
     )
 
     dataset_test = BinaryClassificationDataset(
-        features_path="features/",
-        labels_path=test_csv #Changer en un df avec seulement deux colonnes : bag_name et label
+        features_path=image_folder,
+        labels_path=test_csv,
     )
 
     # Split the dataset into train and validation sets
@@ -133,7 +120,7 @@ def training_mil_model(marker, train_model, encoder=str, csv_dataset=str):
     )
 
     trainer.train(
-        max_epochs=40, train_dataloader=train_dataloader, val_dataloader=val_dataloader
+        max_epochs=100, train_dataloader=train_dataloader, val_dataloader=val_dataloader
     )
 
 
