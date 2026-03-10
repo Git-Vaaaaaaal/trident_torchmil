@@ -12,6 +12,7 @@ numpy
 pandas
 tqdm
 torchmetrics
-scikit-learn
 torchmil
 timm
+scipy==1.13.1
+scikit-learn=1.5.2

@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 from torchmil.datasets import TridentWSIDataset
 from model_mode import BinaryClassificationDataset #Binary class modifie
+from model_mode import options_torchmil
 from torchmil.data import collate_fn
 from torchmil.utils import Trainer
 from torchmil.models import ABMIL
@@ -37,13 +38,12 @@ def plot_confusion_matrix(y_true, y_pred):
     plt.title("Confusion Matrix")
     plt.show()
 
-
-def training_mil_model(marker, train_model, encoder=str, csv_dataset=str):
+#fonction de training modulable en fonction des models, markers et encoders
+def training_mil_model(marker, train_model, encoder=str, csv_dataset=str, slide_features_path=str):
     #Import de df dataset_list
     dataset_csv = pd.read_csv(csv_dataset)
     #Seulement pour train sur BCL2 et titan
-    image_folder = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
-    train_csv, test_csv = split_csv(dataset_csv, "", marker, image_folder)
+    train_csv, test_csv = split_csv(dataset_csv, "", marker, slide_features_path)
 
     list_rmv = ["tma_id", "stain", "xs", "ys", "xe", "ye"]
     dict_cl_name = {"patient_id" : "bag_name", "status" : "label"}
@@ -104,7 +104,7 @@ def training_mil_model(marker, train_model, encoder=str, csv_dataset=str):
         print(key, batch[key].shape)
 
 
-    model = ABMIL(in_dim=768, att_dim=128)
+    model = model
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -160,28 +160,27 @@ def training_mil_model(marker, train_model, encoder=str, csv_dataset=str):
     print(f"test/bag/f1: {f1_score(Y_pred, Y)}")
     plot_confusion_matrix(Y, Y_pred)
 
-patch_size = 512
-coords_dir = TRIDENT_DIR + "patches/"
-patch_labels_dir = TRIDENT_DIR + "patch_labels/"
+#liste des models d'extraction
+features_model = [
+        "ThreadsSlideEncoder",
+        "TitanSlideEncoder",
+        "PRISMSlideEncoder",
+        "CHIEFSlideEncoder",
+        "GigaPathSlideEncoder",
+        "MadeleineSlideEncoder",
+        "FeatherSlideEncoder",
+    ]
 
-""" wsi_name = "test_016"
-# wsi_name = "tumor_005"
+#liste des marqueurs
+list_marker = ["BCL2", "BCL6", "HE", "MUM1", "MYC"]
 
-wsi_path = os.path.join(TIFF_DIR, wsi_name + ".tif")
-slide = openslide.OpenSlide(wsi_path)
+#liste des models de training (voir options_torchmil)
+option_value = list(range(0, 5, 1))
 
-coords_path = os.path.join(coords_dir, wsi_name + "_patches.h5")
-inst_coords = h5py.File(coords_path, "r")["coords"][:]ss
+csv_dataset = "dataset_list.csv"
 
-patch_labels_path = os.path.join(patch_labels_dir, wsi_name + ".h5")
-patch_labels = h5py.File(patch_labels_path, "r")["patch_labels"][:]
- """
-#Seulement pour patch ???
-patch_labels_path = TRIDENT_DIR + "patch_labels/"
-feature_extractor = "conch_v15"
-
-
-
-print("Etape 01")
-
-
+for encoder in features_model:
+    for marker in list_marker :
+        for train in option_value :
+            slide_labels_dir, model = options_torchmil(train, marker, encoder)
+            training_mil_model(marker, model, encoder, csv_dataset, slide_labels_dir)

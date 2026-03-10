@@ -65,27 +65,27 @@ def options_torchmil(mode=int, marker=str, encoder=str):
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
         model = ABMIL(in_dim=int(embedding_level), att_dim=128)
-        return slide_labels_dir, embedding_level, model
+        return slide_labels_dir, model
     elif mode == 1 : #CLAM
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
         model = CLAM_SB(in_dim=int(embedding_level))
-        return slide_labels_dir, embedding_level, model
+        return slide_labels_dir, model
     elif mode == 2 : #TransMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
         model = TransMIL(in_dim=int(embedding_level))
-        return slide_labels_dir, embedding_level, model
+        return slide_labels_dir, model
     elif mode == 3 : #DSMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
         model = DSMIL(in_dim=int(embedding_level))
-        return slide_labels_dir, embedding_level, model
+        return slide_labels_dir, model
     elif mode == 4 : #DTFDMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
         model = DTFDMIL(in_dim=int(embedding_level))
-        return slide_labels_dir, embedding_level, model
+        return slide_labels_dir, model
     else :
         return print("Outvalue : between 0 to 4")
     
