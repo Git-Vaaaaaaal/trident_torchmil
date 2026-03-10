@@ -13,7 +13,7 @@ from trident import OpenSlideWSI
 from trident.segmentation_models import segmentation_model_factory
 from model_mode import options as options
 
-OPENSLIDE_PATH = r'D:\\imvia\\trident_torchmil\\openslide_win64\\openslide_win64'
+OPENSLIDE_PATH = r'openslide_win64\\openslide_win64'
 
 import os
 if hasattr(os, 'add_dll_directory'):

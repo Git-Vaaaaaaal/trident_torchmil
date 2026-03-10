@@ -1,7 +1,6 @@
 torch
 torchvision
 Pillow
-geopandas
 ipython
 huggingface_hub
 h5py
