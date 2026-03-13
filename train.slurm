@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=diffusion2
+#SBATCH --job-name=features_extracted
 #SBATCH --constraint=v100-32g
 #SBATCH --time=20:00:00
 #SBATCH --ntasks=1
@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=40
 #SBATCH --hint=nomultithread
-#SBATCH --output=out.out
+#SBATCH --output=train.out
 #SBATCH --error=logs.out
 #SBATCH -A ehe@v100
 module purge # nettoyer les modules herites par defaut
@@ -15,6 +15,6 @@ conda deactivate # desactiver les environnements herites par defaut
 module load python
 module load arch/a100 # selectionner les modules compiles pour les A100
 source /lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/bin/activate
-export PYTHONPATH=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/lib/python3.9/site-packages:$PYTHONPATH
+export PYTHONPATH=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/lib/python3.12.7/site-packages:$PYTHONPATH
 set -x # activer l’echo des commandes
 srun python features_extraction.py # executer son script
