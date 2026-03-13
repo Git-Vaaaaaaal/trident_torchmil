@@ -1,0 +1,6 @@
+cd $SCRATCH
+module load python
+python3 -m venv trident_venv
+source trident_venv/bin/activate
+pip3 install --prefix=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv -r requirements.txt
+export PYTHONPATH=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/lib/python3.9/site-packages:$PYTHONPATH
