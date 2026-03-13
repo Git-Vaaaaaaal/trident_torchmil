@@ -17,7 +17,7 @@ def options(mode=int):
         embedding_level = 768
         return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
     elif mode == 2 : #Prism
-        PATCH_ENCODER = "virchow"
+        PATCH_ENCODER = "virchow2"
         encoder = PRISMSlideEncoder
         PATCH_SIZE = 224
         embedding_level = 2560
@@ -29,7 +29,7 @@ def options(mode=int):
         embedding_level = 768
         return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
     elif mode == 4 : #Gigapath
-        PATCH_ENCODER = "virchow"
+        PATCH_ENCODER = "virchow2"
         encoder = GigaPathSlideEncoder
         PATCH_SIZE = 256
         embedding_level = 1536

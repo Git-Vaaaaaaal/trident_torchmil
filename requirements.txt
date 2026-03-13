@@ -12,5 +12,6 @@ tqdm
 torchmetrics
 torchmil
 timm
-scipy==1.13.1
-scikit-learn==1.5.2
+scipy
+scikit-learn
+h5py
