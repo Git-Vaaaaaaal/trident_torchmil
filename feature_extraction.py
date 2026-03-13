@@ -43,7 +43,7 @@ for mode in list_mode :
         TARGET_MAG = 20
         PATCH_SIZE = PATCH_SIZE
         for patient in os.listdir(marker_path):
-            patient_id = patient.replace("_masked.svs", "")
+            patient_id = patient.replace(".svs", "")
             patient_svs = os.path.join(marker_path, patient)
             slide = OpenSlideWSI(slide_path=patient_svs, lazy_init=False) # a partir d'ici == definition
 

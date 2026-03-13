@@ -22,9 +22,6 @@ from csv_extractor import split_csv
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-TRIDENT_DIR = "extracted" # Path to the directory where TRIDENT will save the extracted patches and their corresponding feature vectors.
-TIFF_DIR = "output_svs\\BCL2" # Path to the directory where the original WSIs in TIFF format are stored.
-
 def get_metrics(device):
     return {
         "acc": torchmetrics.Accuracy(task="binary").to(device),
@@ -56,12 +53,12 @@ def training_mil_model(marker, train_model, encoder=str, csv_dataset=str, slide_
 
     #Classification binaire : fonction modifie de torchmil
     dataset_train = BinaryClassificationDataset(
-        features_path=image_folder,
+        features_path=slide_features_path, #Path to features
         labels_path=train_csv,   # DataFrame directement
     )
 
     dataset_test = BinaryClassificationDataset(
-        features_path=image_folder,
+        features_path=slide_features_path,
         labels_path=test_csv,
     )
 
