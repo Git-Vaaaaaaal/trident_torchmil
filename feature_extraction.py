@@ -12,7 +12,7 @@ from trident.patch_encoder_models import encoder_factory
 from trident import OpenSlideWSI
 from trident.segmentation_models import segmentation_model_factory
 from model_mode import options as options
-
+#Binaire openslide
 """ OPENSLIDE_PATH = r'openslide_win64\\openslide_win64'
  """
 import os

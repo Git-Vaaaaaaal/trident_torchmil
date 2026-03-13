@@ -17,4 +17,4 @@ module load arch/a100 # selectionner les modules compiles pour les A100
 source /lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/bin/activate
 export PYTHONPATH=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/lib/python3.9/site-packages:$PYTHONPATH
 set -x # activer l’echo des commandes
-srun python features_extraction.py.py # executer son script
+srun python features_extraction.py # executer son script
