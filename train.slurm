@@ -17,4 +17,4 @@ source /lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/bin/activate
 export PYTHONPATH=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_venv/lib/python3.12.7/site-packages:$PYTHONPATH
 export TORCH_HOME=/lustre/fsn1/projects/rech/ehe/udq27fb/trident/torch_cache_resnet
 set -x # activer l’echo des commandes
-srun python /lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_torchmil/features_extraction.py # executer son script
+srun python /lustre/fsn1/projects/rech/ehe/udq27fb/trident/trident_torchmil/feature_extraction.py # executer son script
