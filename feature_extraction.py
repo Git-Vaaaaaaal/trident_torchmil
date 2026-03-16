@@ -4,7 +4,6 @@ import torch
 from PIL import Image
 import geopandas as gpd
 from IPython.display import display
-from huggingface_hub import snapshot_download
 import h5py
 from trident.slide_encoder_models import ABMILSlideEncoder, CHIEFSlideEncoder, FeatherSlideEncoder, GigaPathSlideEncoder, MadeleineSlideEncoder
 from trident.slide_encoder_models import ThreadsSlideEncoder, TitanSlideEncoder, PRISMSlideEncoder, MeanSlideEncoder
@@ -22,6 +21,8 @@ import os
         import openslide
 else: """
 import openslide
+
+print("Import ok")
 
 #variables
 list_markers = ["BCL2", "BCL6", "HE", "MUM1", "MYC"] # "BCL2", "BCL6", "HE", "MUM1", "MYC"
@@ -42,7 +43,9 @@ for mode in list_mode :
         marker_path = os.path.join(input_dir, marker)
         TARGET_MAG = 20
         PATCH_SIZE = PATCH_SIZE
+        print(f"Starting process {marker}")
         for patient in os.listdir(marker_path):
+            print(f"{patient} is processing...")
             patient_id = patient.replace(".svs", "")
             patient_svs = os.path.join(marker_path, patient)
             slide = OpenSlideWSI(slide_path=patient_svs, lazy_init=False) # a partir d'ici == definition
@@ -107,6 +110,8 @@ for mode in list_mode :
             save_features=os.path.join(slide_features_dir, f"{patient_id}.h5"), # changer
             device=DEVICE
             )
+
+            print(f"{patient} finished extraction")
 
     print(f"feature extraction works for {marker}")
 
