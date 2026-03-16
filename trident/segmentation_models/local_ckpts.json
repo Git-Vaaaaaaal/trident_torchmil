@@ -1,5 +1,5 @@
 {
-    "hest": "",
+    "hest": "/lustre/fsn1/projects/rech/ehe/udq27fb/trident/models/deeplabv3_seg_v4.ckpt",
     "grandqc": "",
     "grandqc_artifact": ""
 }
