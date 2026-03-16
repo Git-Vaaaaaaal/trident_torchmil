@@ -24,6 +24,9 @@ import openslide
 
 print("Import ok")
 
+os.environ["TORCH_HOME"]="/lustre/fsn1/projects/rech/ehe/udq27fb/trident/torch_cache_resnet"
+
+
 #variables
 list_markers = ["BCL2", "BCL6", "HE", "MUM1", "MYC"] # "BCL2", "BCL6", "HE", "MUM1", "MYC"
 list_mode = list(range(0, 7, 1))
