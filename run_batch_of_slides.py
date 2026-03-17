@@ -68,8 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
                               "Defaults to False (only top-level slides are included)."))
     # Segmentation arguments 
     parser.add_argument('--segmenter', type=str, default='hest', 
-                        choices=['hest', 'grandqc'], 
-                        help='Type of tissue vs background segmenter. Options are HEST or GrandQC.')
+                        choices=['hest', 'grandqc', 'otsu'],
+                        help='Type of tissue vs background segmenter. Options are HEST, GrandQC, or Otsu.')
     parser.add_argument('--seg_conf_thresh', type=float, default=0.5, 
                     help='Confidence threshold to apply to binarize segmentation predictions. Lower this threhsold to retain more tissue. Defaults to 0.5. Try 0.4 as 2nd option.')
     parser.add_argument('--remove_holes', action='store_true', default=False, 
@@ -82,8 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help='Batch size for segmentation. Defaults to None (use `batch_size` argument instead).')
     
     # Patching arguments
-    parser.add_argument('--mag', type=int, choices=[5, 10, 20, 40, 80], default=20, 
-                        help='Magnification for coords/features extraction.')
+    parser.add_argument('--mag', type=float, default=20.0,
+                        help='Magnification for coords/features extraction. Supports fractional values (e.g., 1.25x, 2.5x, 5x, etc.).')
     parser.add_argument('--patch_size', type=int, default=512, 
                         help='Patch size for coords/image extraction.')
     parser.add_argument('--overlap', type=int, default=0, 
@@ -168,7 +168,7 @@ def initialize_processor(args: argparse.Namespace) -> Processor:
     )
 
 
-def run_task(processor: Processor, task) :
+def run_task(processor: Processor, args: argparse.Namespace) -> None:
     """
     Execute the specified task using the Trident Processor.
 
@@ -180,8 +180,10 @@ def run_task(processor: Processor, task) :
         Parsed command-line arguments containing task configuration.
     """
 
-    if task == 'seg':
+    if args.task == 'seg':
         from trident.segmentation_models.load import segmentation_model_factory
+
+        seg_device = "cpu" if args.segmenter == "otsu" else f"cuda:{args.gpu}"
 
         # instantiate segmentation model and artifact remover if requested by user
         segmentation_model = segmentation_model_factory(
@@ -203,9 +205,9 @@ def run_task(processor: Processor, task) :
             holes_are_tissue= not args.remove_holes,
             artifact_remover_model=artifact_remover_model,
             batch_size=args.seg_batch_size if args.seg_batch_size is not None else args.batch_size,
-            device=f'cuda:{args.gpu}',
+            device=seg_device,
         )
-    elif task == 'coords':
+    elif args.task == 'coords':
         processor.run_patching_job(
             target_magnification=args.mag,
             patch_size=args.patch_size,
@@ -213,7 +215,7 @@ def run_task(processor: Processor, task) :
             saveto=args.coords_dir,
             min_tissue_proportion=args.min_tissue_proportion
         )
-    elif task == 'feat':
+    elif args.task == 'feat':
         if args.slide_encoder is None: 
             from trident.patch_encoder_models.load import encoder_factory
             encoder = encoder_factory(args.patch_encoder, weights_path=args.patch_encoder_ckpt_path)
@@ -235,7 +237,7 @@ def run_task(processor: Processor, task) :
                 batch_limit=args.feat_batch_size if args.feat_batch_size is not None else args.batch_size,
             )
     else:
-        raise ValueError(f'Invalid task: {task}')
+        raise ValueError(f'Invalid task: {args.task}')
 
 
 def main() -> None:
@@ -284,7 +286,7 @@ def main() -> None:
             return initialize_processor(local_args)
 
         def run_task_fn(processor: Processor, task_name: str) -> None:
-            task = task_name
+            args.task = task_name
             run_task(processor, args)
 
         producer = Thread(target=batch_producer, args=(
@@ -292,7 +294,7 @@ def main() -> None:
         ))
 
         consumer = Thread(target=batch_consumer, args=(
-            queue, task, args.wsi_cache, processor_factory, run_task_fn
+            queue, args.task, args.wsi_cache, processor_factory, run_task_fn
         ))
 
         print("[MAIN] Starting producer and consumer threads.")
@@ -303,9 +305,9 @@ def main() -> None:
     else:
         # === Sequential mode ===
         processor = initialize_processor(args)
-        tasks = ['seg', 'coords', 'feat'] if task == 'all' else [task]
+        tasks = ['seg', 'coords', 'feat'] if args.task == 'all' else [args.task]
         for task_name in tasks:
-            task = task_name
+            args.task = task_name
             run_task(processor, args)
 
 

@@ -24,7 +24,7 @@ import openslide
 
 print("Import ok")
 
-os.environ["TORCH_HOME"]="/lustre/fsn1/projects/rech/ehe/udq27fb/trident/torch_cache_resnet"
+#os.environ["TORCH_HOME"]="/lustre/fsn1/projects/rech/ehe/udq27fb/trident/torch_cache_resnet"
 
 
 #variables
@@ -32,15 +32,15 @@ list_markers = ["BCL2", "BCL6", "HE", "MUM1", "MYC"] # "BCL2", "BCL6", "HE", "MU
 list_mode = list(range(0, 7, 1))
 
 DEVICE = f"cuda:0" if torch.cuda.is_available() else "cpu"
-input_dir = "output_svs"
+input_dir = "tiff_img"
 output_dir = "extracted"
 os.makedirs(output_dir, exist_ok=True)
 verification = False
 
 # b. Create OpenSlideWSI
 for mode in list_mode :
-    PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level = options(mode)
-    mode_dir = os.path.join(output_dir, str(encoder))
+    PATCH_ENCODER, encoder, encoder_name, PATCH_SIZE, embedding_level = options(mode)
+    mode_dir = os.path.join(output_dir, encoder_name)
     os.makedirs(mode_dir, exist_ok=True)
     for marker in list_markers :
         marker_path = os.path.join(input_dir, marker)

@@ -7,48 +7,56 @@ def options(mode=int):
     if mode == 0 : #Threads
         PATCH_ENCODER = "conch_v15"
         encoder = ThreadsSlideEncoder
+        encoder_name = "ThreadsSlideEncoder"
         PATCH_SIZE = 512
         embedding_level = 768
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name, PATCH_SIZE, embedding_level
     elif mode == 1 : #Titan
         PATCH_ENCODER = "conch_v15"
         encoder = TitanSlideEncoder
+        encoder_name = "TitanSlideEncoder"
         PATCH_SIZE = 512
         embedding_level = 768
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name, PATCH_SIZE, embedding_level
     elif mode == 2 : #Prism
         PATCH_ENCODER = "virchow2"
         encoder = PRISMSlideEncoder
+        encoder_name = "PRISMSlideEncoder"
         PATCH_SIZE = 224
         embedding_level = 2560
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name,PATCH_SIZE, embedding_level
     elif mode == 3 : #Chief
         PATCH_ENCODER = "ctranspath"
         encoder = CHIEFSlideEncoder
+        encoder_name = "CHIEFSlideEncoder"
         PATCH_SIZE = 256
         embedding_level = 768
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name,PATCH_SIZE, embedding_level
     elif mode == 4 : #Gigapath
         PATCH_ENCODER = "virchow2"
         encoder = GigaPathSlideEncoder
+        encoder_name = "GigaPathSlideEncoder"
         PATCH_SIZE = 256
         embedding_level = 1536
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name,PATCH_SIZE, embedding_level
     elif mode == 5 : #Madeleine
         PATCH_ENCODER = "conch_v1"
         encoder = MadeleineSlideEncoder
+        encoder_name = "MadeleineSlideEncoder"
         PATCH_SIZE = 512
         embedding_level = 512
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name,PATCH_SIZE, embedding_level
     elif mode == 6 : #Prism
         PATCH_ENCODER = "conch_v15"
         encoder = FeatherSlideEncoder
+        encoder_name = "FeatherSlideEncoder"
         PATCH_SIZE = 512
         embedding_level = 768
-        return PATCH_ENCODER, encoder, PATCH_SIZE, embedding_level
+        return PATCH_ENCODER, encoder, encoder_name,PATCH_SIZE, embedding_level
     else :
         return print("Outvalue : between 0 to 6")
     
+
 
 def options_torchmil(mode=int, marker=str, encoder=str):
     #Dictionnaire de taille de vecteur (embedding)
