@@ -290,6 +290,7 @@ class WSIPatcher:
             bbox_mask = np.zeros(len(coords), dtype=bool)
             
         
+        mask = mask.buffer(0)  # corrige les géométries invalides
         union_mask = mask.union_all()
 
         squares = [

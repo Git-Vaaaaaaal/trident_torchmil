@@ -12,7 +12,8 @@ def mask_to_geojson(mask_array, image_name, output_dir):
     if mask_array.ndim == 3:
         mask_array = mask_array[:, :, 0]
 
-    binary = np.where(mask_array > 0, 255, 0).astype(np.uint8)
+    binary = np.where(mask_array == 0, 255, 0).astype(np.uint8)
+    #binary = np.where(mask_array > 0, 255, 0).astype(np.uint8), transforme les pixels noir en fond
 
     contours, hierarchy = cv2.findContours(
         binary,

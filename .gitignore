@@ -5,3 +5,6 @@
 /tiff_img
 /output
 /output_geojson
+/output_mask_tiff
+/pipe_trident_torchmil_png
+trident.zip
