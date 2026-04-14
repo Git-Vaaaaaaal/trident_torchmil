@@ -2,13 +2,8 @@
 #$ -q gpu
 #$ -j y
 #$ -o result.out
-#$ -N mil_train
-cd /beegfs/data/work/c-2iia/vb710264/mil_lab
-module load python/3.11/anaconda/2024.02
-bash
-source ~/.bashrc
-conda activate trident_env311
-
-cd /beegfs/data/work/c-2iia/vb710264/trident/trident_torchmil
-python /beegfs/data/work/c-2iia/vb710264/trident/trident_torchmil/feature_extraction.py
-python /beegfs/data/work/c-2iia/vb710264/trident/trident_torchmil/torchmil_process.py
+#$ -N trident_job
+cd /beegfs/data/work/c-2iia/vb710264/trident_torchmil
+module load python
+source /beegfs/data/work/c-2iia/vb710264/trident_torchmil/trident_venv/venv/bin/activate
+python /beegfs/data/work/c-2iia/vb710264/trident_torchmil/test_slide_ccub.py
