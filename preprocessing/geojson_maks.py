@@ -72,13 +72,13 @@ def mask_to_geojson(mask_array, image_name, output_dir):
     return out_path
 
 
-INPUT_DIR  = (f"F:\\imvia\\trident_torchmil\\output")
-OUTPUT_DIR = (f"F:\\imvia\\trident_torchmil\\output_geojson")
+INPUT_DIR  = (f"D:\\imvia\\trident_torchmil\\output_mask_tiff")
+OUTPUT_DIR = (f"D:\\imvia\\trident_torchmil\\output_geojson")
 
-list_markers = ["BCL2", "BCL6", "HE", "MUM1", "MYC", "CD10"]
+list_markers = ["BCL2_cleaned", "BCL6_cleaned", "HE_cleaned", "MUM1_cleaned", "MYC_cleaned", "CD10_cleaned"]
 
 MIN_AREA = 500    # surface minimale en px² pour ignorer le bruit
-EPSILON  = 2.0   # simplification du contour (0 = désactivé)
+EPSILON  = 0   # simplification du contour (0 = désactivé)
 CRS      = "urn:ogc:def:crs:EPSG::3857"
 
 EXTENSIONS = {".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp"}

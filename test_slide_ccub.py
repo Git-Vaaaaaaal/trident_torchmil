@@ -181,11 +181,12 @@ login(hf_token)
 device = f'cuda:{GPU}' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
-list_marker = ["new_geojson"]
+list_marker = ["BCL2", "BCL6", "HE", "MUM1", "MYC", "CD10"]
+slide_encoder_list = ["feather", "madeleine", "gigapath", "chief", "prism", "titan", "threads"]
 
 path_contour = "job_dir"
 path_wsi = "wsi_source"
-path = "/beegfs/data/work/c-2iia/vb710264/trident_torchmil/"
+path = "trident_torchmil/results"
 for marker in list_marker:
     marker_path = os.path.join(path, marker)
     JOB_DIR = os.path.join(marker_path, path_contour) #output, les geojson doivent etre places dans results
