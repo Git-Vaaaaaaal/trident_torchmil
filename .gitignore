@@ -8,3 +8,7 @@
 /output_mask_tiff
 /pipe_trident_torchmil_png
 trident.zip
+env.py
+/pipe_trident_torchmil_png_old
+/extract_tma_tiff_img
+pipe_trident_torchmil_png_old.zip
