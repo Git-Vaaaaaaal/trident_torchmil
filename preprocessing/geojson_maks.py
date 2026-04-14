@@ -72,8 +72,8 @@ def mask_to_geojson(mask_array, image_name, output_dir):
     return out_path
 
 
-INPUT_DIR  = (f"D:\\imvia\\trident_torchmil\\extract_tma_tiff_img")
-OUTPUT_DIR = (f"D:\\imvia\\trident_torchmil\\output_geojson")
+INPUT_DIR  = (f"F:\\imvia\\trident_torchmil\\output")
+OUTPUT_DIR = (f"F:\\imvia\\trident_torchmil\\output_geojson")
 
 list_markers = ["BCL2", "BCL6", "HE", "MUM1", "MYC", "CD10"]
 

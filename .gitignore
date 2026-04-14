@@ -7,8 +7,4 @@
 /output_geojson
 /output_mask_tiff
 /pipe_trident_torchmil_png
-/extract_tma
-/pipe_trident_torchmil_png_old
-pipe_trident_torchmil_png_old.zip
-/extract_tma_tiff_img
-env.py
+trident.zip
