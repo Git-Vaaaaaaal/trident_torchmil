@@ -10,7 +10,6 @@ numpy
 pandas
 tqdm
 torchmetrics
-torchmil
 timm
 scipy
 scikit-learn
