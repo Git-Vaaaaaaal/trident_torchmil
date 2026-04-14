@@ -3,7 +3,7 @@ USER_NAME=vb710264
 GROUP_NAME=c-2iia
 
 # modify theses variables according to your project directory name and virtual environment directory name
-PROJECT_NAME=trident
+PROJECT_NAME=trident_torchmil
 VENV_SUBFOLDER=trident_venv
 PYTHON_SITE_PACKAGES_VERSION=3.9
 
