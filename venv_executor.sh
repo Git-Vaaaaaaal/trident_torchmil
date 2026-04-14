@@ -4,7 +4,7 @@ GROUP_NAME=c-2iia
 
 # modify theses variables according to your project directory name and virtual environment directory name
 PROJECT_NAME=trident_torchmil
-VENV_SUBFOLDER=trident_venv
+VENV_SUBFOLDER=trident_torchmil
 PYTHON_SITE_PACKAGES_VERSION=3.9
 
 # This part should not be modified
