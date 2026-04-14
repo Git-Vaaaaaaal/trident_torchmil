@@ -181,7 +181,7 @@ login(hf_token)
 device = f'cuda:{GPU}' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
-list_marker = ["bcl2"]
+list_marker = ["new_geojson"]
 
 path_contour = "job_dir"
 path_wsi = "wsi_source"
