@@ -198,4 +198,3 @@ for marker in list_marker:
         print(f"Running task: {task}")
         run_task(processor, task)
 
-
