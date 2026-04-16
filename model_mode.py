@@ -72,27 +72,27 @@ def options_torchmil(mode=int, marker=str, encoder=str):
     if mode == 0 : #ABMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
-        model = ABMIL(in_dim=int(embedding_level), att_dim=128)
+        model = ABMIL(in_shape=(int(embedding_level),), att_dim=128)
         return slide_labels_dir, model
     elif mode == 1 : #CLAM
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
-        model = CLAM_SB(in_dim=int(embedding_level))
+        model = CLAM_SB(in_shape=int(embedding_level))
         return slide_labels_dir, model
     elif mode == 2 : #TransMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
-        model = TransMIL(in_dim=int(embedding_level))
+        model = TransMIL(in_shape=int(embedding_level))
         return slide_labels_dir, model
     elif mode == 3 : #DSMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
-        model = DSMIL(in_dim=int(embedding_level))
+        model = DSMIL(in_shape=int(embedding_level))
         return slide_labels_dir, model
     elif mode == 4 : #DTFDMIL
         slide_labels_dir = f"extracted\\{encoder}\\slide_features_extraction\\{marker}"
         embedding_level = dict_encoder[encoder]
-        model = DTFDMIL(in_dim=int(embedding_level))
+        model = DTFDMIL(in_shape=int(embedding_level))
         return slide_labels_dir, model
     else :
         return print("Outvalue : between 0 to 4")
@@ -122,7 +122,8 @@ class BinaryClassificationDataset(ProcessedMILDataset):
         inst_labels_path: str = None,
         coords_path: str = None,
         bag_names: list = None,
-        bag_keys: list = ["X", "Y", "y_inst", "adj", "coords"],
+        bag_keys: list = ["X", "Y"],
+        #bag_keys: list = ["X", "Y", "y_inst", "adj", "coords"], ancienne version
         dist_thr: float = 1.5,
         adj_with_dist: bool = False,
         norm_adj: bool = True,

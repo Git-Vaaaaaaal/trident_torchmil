@@ -39,25 +39,29 @@ def plot_confusion_matrix(y_true, y_pred):
 def training_mil_model(marker, train_model, encoder=str, csv_dataset=str, slide_features_path=str):
     #Import de df dataset_list
     dataset_csv = pd.read_csv(csv_dataset)
+    
+    
+    list_rmv = ["tma_id", "stain", "xs", "ys", "xe", "ye"]
+    dict_cl_name = {"patient_id" : "bag_name", "status" : "label"}
+    dataset_csv = dataset_csv.rename(columns=dict_cl_name)
+
+    # Conversion en int (0/1)
+    dataset_csv["label"] = dataset_csv["label"].astype(float)  # au cas où
+    dataset_csv["label"] = dataset_csv["label"].round().astype(int)
+
     #Seulement pour train sur BCL2 et titan
     train_csv, test_csv = split_csv(dataset_csv, "", marker, slide_features_path)
 
-    list_rmv = ["tma_id", "stain", "xs", "ys", "xe", "ye"]
-    dict_cl_name = {"patient_id" : "bag_name", "status" : "label"}
-
-    train_csv = train_csv.drop(columns=list_rmv)
-    test_csv = test_csv.drop(columns=list_rmv)
-
-    train_csv = train_csv.drop(columns=list_rmv)
-    test_csv = test_csv.drop(columns=list_rmv)
-
+    """     train_csv = train_csv.drop(columns=list_rmv)
+        test_csv = test_csv.drop(columns=list_rmv)
+    """
     #Classification binaire : fonction modifie de torchmil
-    dataset_train = BinaryClassificationDataset(
+    dataset_train = TridentWSIDataset(
         features_path=slide_features_path, #Path to features
         labels_path=train_csv,   # DataFrame directement
     )
 
-    dataset_test = BinaryClassificationDataset(
+    dataset_test = TridentWSIDataset(
         features_path=slide_features_path,
         labels_path=test_csv,
     )
@@ -169,15 +173,26 @@ features_model = [
     ]
 
 #liste des marqueurs
-list_marker = ["BCL2", "BCL6", "HE", "MUM1", "MYC"]
+list_marker = ["BCL2", "BCL6", "CD10", "HE", "MUM1", "MYC"]
 
 #liste des models de training (voir options_torchmil)
 option_value = list(range(0, 5, 1))
 
-csv_dataset = "dataset_list.csv"
+csv_dataset = "extract_tma_tiff_img/clinical_data.csv"
 
+
+
+#Test Pipeline juste pour BCL2 et FeatherSlideEncoder
+marker = "BCL2"
+encoder = "FeatherSlideEncoder"
+slide_labels_dir, model = options_torchmil(0, marker, encoder)
+slide_features_path = r"BCL2\job_dir\20.0x_16px_0px_overlap\slide_features_feather"
+training_mil_model(marker, model, encoder, csv_dataset, slide_features_path)
+
+
+""" 
 for encoder in features_model:
     for marker in list_marker :
         for train in option_value :
             slide_labels_dir, model = options_torchmil(train, marker, encoder)
-            training_mil_model(marker, model, encoder, csv_dataset, slide_labels_dir)
+            training_mil_model(marker, model, encoder, csv_dataset, slide_labels_dir) """

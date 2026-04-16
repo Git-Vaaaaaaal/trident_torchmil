@@ -24,10 +24,12 @@ def add_resultat_to_images(csv_resultats_path, csv_images_path, output_path=None
 
     return df_merged
 
-clinical_data = "pipe_trident_torchmil\\clinical_data.csv"
-annotation = "pipe_trident_torchmil\\annotations.csv"
+""" clinical_data = "extract_tma_tiff_img\\clinical_data.csv"
+annotation = "extract_tma_tiff_img\\annotations.csv"
 
-add_resultat_to_images(clinical_data, annotation, "pipe_trident_torchmil\\dataset_list.csv")
+add_resultat_to_images(clinical_data, annotation, "finish_template.csv")
+ """
+
 
 def split_csv(input_path, output, marker_list, image_folder, random_seed=None, save_csv=False):
     #input_path = dataframe
@@ -35,7 +37,7 @@ def split_csv(input_path, output, marker_list, image_folder, random_seed=None, s
 
     for marker in marker_list:
         # Filtrer les lignes pour le marqueur actuel
-        df_marker = df[df['marker'] == marker]
+        df_marker = df[df['stain'] == marker]
 
         #Supprimer ligne fantome pour eviter soucis de lecture de fichier svs
         rows_to_drop = []
