@@ -99,23 +99,6 @@ def read_wsi_patches(slide, inst_coords, patch_size=512, resize_size=50):
 patches_list, row_array, column_array = read_wsi_patches(slide, inst_coords, patch_size=512, resize_size=50)
 
 
-#New cells 
-from torchmil.visualize import patches_to_canvas, draw_heatmap_wsi
-
-canvas = patches_to_canvas(patches_list, row_array, column_array, 50)
-
-canvas_with_patch_labels = draw_heatmap_wsi(canvas, features, 50, row_array, column_array)
-
-fig, axs = plt.subplots(1, 2, figsize=(6, 6))
-axs[0].imshow(canvas)
-axs[0].set_title("TMA", fontsize=16)
-axs[1].imshow(canvas_with_patch_labels)
-axs[1].set_title("TMA with Patch Labels", fontsize=16)
-for ax in axs:
-    ax.set_xticks([])
-    ax.set_yticks([])
-plt.tight_layout()
-plt.show()
 
 
 #New cells
@@ -127,28 +110,38 @@ import pandas as pd
 patch_labels_path = TRIDENT_DIR + "patch_labels/"
 feature_extractor = "conch_v15"
 
-train_labels_path = "./train.csv"
-train_wsis = pd.read_csv(train_labels_path)["wsi_name"].tolist()
 
-test_labels_path = "./test.csv"
-test_wsis = pd.read_csv(test_labels_path)["wsi_name"].tolist()
+bcl2_labels_path = "bcl2_torchmil_test.csv"
+df_data = pd.read_csv(bcl2_labels_path)
+
+train_df = df_data[df_data["stain"] == "BCL2"]
+test_df = df_data[df_data["stain"] == "BCL2"]
+
+
+train_wsis = train_df["new_patient_id"].astype(str).tolist()
+
+test_wsis = test_df["new_patient_id"].astype(str).tolist()
+
+#Path to the features
+base_path = os.path.join(TRIDENT_DIR, "job_dir", "20.0x_16px_0px_overlap")
+
 
 dataset = TridentWSIDataset(
-    base_path=TRIDENT_DIR, 
-    labels_path=train_labels_path,
+    base_path=base_path + r"\\", 
+    labels_path=bcl2_labels_path,
     feature_extractor=feature_extractor,
     patch_labels_path=patch_labels_path,
     wsi_names=train_wsis,
     bag_keys=["X", "Y", "y_inst", "adj", "coords"],
-    patch_seize=patch_size,
+    patch_size=patch_size,
     load_at_init=True,
-    wsi_name_col="wsi_name",
-    wsi_label_col="wsi_label",
+    wsi_name_col="new_patient_id",
+    wsi_label_col="status",
     )
 
 dataset_test = TridentWSIDataset(
-    base_path=TRIDENT_DIR,
-    labels_path=test_labels_path,
+    base_path=base_path + r"\\",
+    labels_path=bcl2_labels_path,
     feature_extractor=feature_extractor,
     patch_labels_path=patch_labels_path,
     wsi_names=test_wsis,
@@ -285,3 +278,22 @@ model = model.to(device)
 for epoch in range(20):
     train(train_loader, epoch + 1)
     val(test_loader, epoch + 1)
+
+
+#New cells 
+from torchmil.visualize import patches_to_canvas, draw_heatmap_wsi
+
+canvas = patches_to_canvas(patches_list, row_array, column_array, 50)
+
+canvas_with_patch_labels = draw_heatmap_wsi(canvas, features, 50, row_array, column_array)
+
+fig, axs = plt.subplots(1, 2, figsize=(6, 6))
+axs[0].imshow(canvas)
+axs[0].set_title("TMA", fontsize=16)
+axs[1].imshow(canvas_with_patch_labels)
+axs[1].set_title("TMA with Patch Labels", fontsize=16)
+for ax in axs:
+    ax.set_xticks([])
+    ax.set_yticks([])
+plt.tight_layout()
+plt.show()
