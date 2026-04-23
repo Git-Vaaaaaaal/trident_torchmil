@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+from class_tridentwsi import TridentTMADataset
 
 
 
@@ -126,7 +127,7 @@ test_wsis = test_df["new_patient_id"].astype(str).tolist()
 base_path = os.path.join(TRIDENT_DIR, "job_dir", "20.0x_16px_0px_overlap")
 
 
-dataset = TridentWSIDataset(
+dataset = TridentTMADataset(
     base_path=base_path + r"\\", 
     labels_path=bcl2_labels_path,
     feature_extractor=feature_extractor,
@@ -139,7 +140,7 @@ dataset = TridentWSIDataset(
     wsi_label_col="status",
     )
 
-dataset_test = TridentWSIDataset(
+dataset_test = TridentTMADataset(
     base_path=base_path + r"\\",
     labels_path=bcl2_labels_path,
     feature_extractor=feature_extractor,

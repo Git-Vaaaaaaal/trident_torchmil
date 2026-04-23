@@ -1,14 +1,15 @@
 import numpy as np
 import os
 
-from torchmil.processed_mil_dataset import ProcessedMILDataset
+
+from torchmil.datasets.processed_mil_dataset import ProcessedMILDataset
 import pandas as pd
 import h5py
 
 
 
 
-class TridentWSIDataset(ProcessedMILDataset):
+class TridentTMADataset(ProcessedMILDataset):
     r"""
     This class represents a dataset of Whole Slide Images (WSI) for Multiple Instance Learning (MIL) that was processed using the [TRIDENT](https://github.com/mahmoodlab/TRIDENT) repository.
 
