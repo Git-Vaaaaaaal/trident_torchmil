@@ -1,300 +1,284 @@
-import os 
-import h5py
-import openslide
-import cv2
-import tqdm
-import matplotlib.pyplot as plt
-import numpy as np
+import os
 import torch
-import torch.nn as nn
-from class_tridentwsi import TridentTMADataset
+import pandas as pd
+from torch.utils.data import DataLoader
+from sklearn.model_selection import train_test_split
+
+# Import de tes classes et fonctions spécifiques
+from torchmil.data import collate_fn
+from torchmil.nn import masked_softmax
+
+from torchmil.datasets.processed_mil_dataset import ProcessedMILDataset
+import pandas as pd
+import h5py
+import numpy as np
+import os
 
 
 
-TRIDENT_DIR = "BCL2" #Path to the directory where trident will save the extracted features.
-TIFF_DIR = r"extract_tma_tiff_img\BCL2"   #Path to the directory where the tiff files are stored.
+class TridentTMADatasetSLIDE(ProcessedMILDataset):
+    r"""
+    This class represents a dataset of Whole Slide Images (WSI) for Multiple Instance Learning (MIL) that was processed using the [TRIDENT](https://github.com/mahmoodlab/TRIDENT) repository.
+
+    **Directory structure.**
+    For more information on the processing of the bags, refer to the [`ProcessedMILDataset` class](processed_mil_dataset.md).
+    This dataset expects the directory structure provided by the TRIDENT repository. The `base_path` argument should point to the base directory of the TRIDENT output, of the form `{mag}x_{ps}px_{opx}px_overlap/`. In this folder, the following folders are expected:
+    ```
+    base_path
+    ├──features_{feature_extractor}
+    |   ├── wsi1.h5
+    |   ├── wsi2.h5
+    |   └── ...
+    ├──patches
+    |   ├── wsi1_patches.h5
+    |   ├── wsi2_patches.h5
+    |   └── ...
+    └──patch_labels (optional)
+        ├── wsi1.h5
+        ├── wsi2.h5
+        └── ...
+    ```
+
+    **Adjacency matrix.**
+    If the coordinates of the patches are available, an adjacency matrix representing the spatial relationships between the patches is built. Please refer to the [`ProcessedMILDataset` class](processed_mil_dataset.md) for more information on how the adjacency matrix is built.
+
+    **WSI-level labels.**
+    The labels of the WSIs can be provided in two ways:
+    1. As a directory containing one file per WSI, following the same structure as the features and patches folders.
+    2. As a CSV file containing the WSI names and their corresponding labels. In this case, the user must provide the column names for the WSI names and labels using the `wsi_name_col` and `wsi_label_col` keyword arguments, respectively.
+
+    **Patch-level labels.**
+    The labels of the patches can be provided through the `patch_labels_path` argument. This should be a directory containing one '.h5' file per WSI. This file should have "patch_labels" as a key, which should contain an array with the labels of the patches. The order of the patch labels should be the same as the order of the features and coordinates of the patches.
+    """
+
+    def __init__(
+        self,
+        base_path: str,
+        labels_path: str,
+        feature_extractor: str,
+        patch_labels_path: str = None,
+        wsi_names: list = None,
+        bag_keys: list = ["X", "Y", "y_inst", "adj", "coords"],
+        patch_size: int = 512,
+        dist_thr: float = None,
+        adj_with_dist: bool = False,
+        norm_adj: bool = True,
+        load_at_init: bool = True,
+        wsi_name_col: str = None,
+        wsi_label_col: str = None,
+    ) -> None:
+        """
+        Class constructor.
+
+        Arguments:
+            base_path: Path to the base directory containing the TRIDENT folders.
+            labels_path: Path to the directory or CSV file containing the labels of the WSIs.
+            feature_extractor: Feature extractor used to extract the features. This will determine the features folder name.
+            patch_labels_path: Path to the directory containing the labels of the patches.
+            wsi_names: List of the names of the WSIs to load. If None, all the WSIs in the `features_path` directory are loaded.
+            bag_keys: List of keys to use for the bags. Must be in ['X', 'Y', 'y_inst', 'coords'].
+            patch_size: Size of the patches.
+            dist_thr: Distance threshold for building the adjacency matrix. If None, it is set to `sqrt(2) * patch_size`.
+            adj_with_dist: If True, the adjacency matrix is built using the Euclidean distance between the patches features. If False, the adjacency matrix is binary.
+            norm_adj: If True, normalize the adjacency matrix.
+            load_at_init: If True, load the bags at initialization. If False, load the bags on demand.
+            wsi_name_col: Name of the column containing the WSI names in the CSV file provided in `labels_path`. Only used if `labels_path` is a CSV file.
+            wsi_label_col: Name of the column containing the WSI labels in the CSV file provided in `labels_path`. Only used if `labels_path` is a CSV file.
+        """
+        if dist_thr is None:
+            # dist_thr = np.sqrt(2.0) * patch_size
+            dist_thr = np.sqrt(2.0)
+
+        self.base_path = base_path
+        self.feature_extractor = feature_extractor
+        features_path = r"\BCL2\job_dir\20.0x_16px_0px_overlap\slide_features_feather"
+        #features_path = os.path.join(self.base_path, f"features_{feature_extractor}")
+        coords_path = os.path.join(self.base_path, "patches")
+        if patch_labels_path is not None and not os.path.isabs(patch_labels_path):
+            # If the path doesn't exist as relative to cwd, treat it as relative to base_path
+            if not os.path.exists(patch_labels_path):
+                patch_labels_path = os.path.join(self.base_path, patch_labels_path)
+
+        self.patch_size = patch_size
+        self.wsi_name_col = wsi_name_col
+        self.wsi_label_col = wsi_label_col
+
+        super().__init__(
+            features_path=features_path,
+            labels_path=labels_path,
+            inst_labels_path=patch_labels_path,
+            coords_path=coords_path,
+            bag_names=wsi_names,
+            bag_keys=bag_keys,
+            file_ext=".h5",
+            dist_thr=dist_thr,
+            adj_with_dist=adj_with_dist,
+            norm_adj=norm_adj,
+            load_at_init=load_at_init,
+        )
+
+    def _load_coords(self, name: str) -> np.ndarray:
+        """
+        Load the coordinates of a bag from disk.
+
+        Arguments:
+            name: Name of the bag to load.
+
+        Returns:
+            coords: Coordinates of the bag.
+        """
+        coords_file = os.path.join(self.coords_path, name + "_patches" + self.file_ext)
+        coords = h5py.File(coords_file, "r")["coords"][:]
+        if coords is not None:
+            coords = coords / self.patch_size
+            coords = coords.astype(int)
+        return coords
+
+    def _load_inst_labels(self, name: str) -> np.ndarray:
+        """
+        Load the instance labels of a bag from disk.
+
+        Arguments:
+            name: Name of the bag to load.
+
+        Returns:
+            inst_labels: Instance labels of the bag.
+        """
+        inst_labels_file = os.path.join(self.inst_labels_path, name + "_patches" + self.file_ext)
+        #inst_labels = self._read_file(inst_labels_file, "patch_labels")
+        inst_labels = self._read_file(inst_labels_file, "coords")
+        return inst_labels
+
+    def _load_labels(self, name: str) -> np.ndarray:
+        """
+        Load the labels of a bag from disk.
+        Allows to load the labels from a CSV file, where the WSI names and labels are provided in two columns.
+        The column names for the WSI names and labels should be provided through the `wsi_name_col` and `wsi_label_col` keyword arguments, respectively.
+
+        Arguments:
+            name: Name of the bag to load.
+
+        Returns:
+            labels: Labels of the bag.
+        """
+
+        if os.path.isdir(self.labels_path):
+            return super()._load_labels(name)
+        else:
+            if not hasattr(self, "labels_csv"):
+                self.labels_csv = pd.read_csv(os.path.join(self.labels_path))
+            if self.wsi_name_col is not None and self.wsi_label_col is not None:
+                try:
+                    """ self.labels_csv[self.wsi_name_col] = self.labels_csv[
+                        self.wsi_name_col
+                    ].apply(lambda x: os.path.splitext(x)[0]) """ #OLD APPROACH, PROBLEM WITH INT AND STR
+                    
+                    #NEW APPROACH FOR DIFFERENCIATE INT AND STR WSI NAMES IN THE CSV
+                    self.labels_csv[self.wsi_name_col] = self.labels_csv[self.wsi_name_col].astype(str).apply(lambda x: os.path.splitext(x)[0])
+
+                    label = self.labels_csv.loc[
+                        self.labels_csv[self.wsi_name_col] == name, self.wsi_label_col
+                    ].values
+                except ValueError:
+                    raise ValueError(
+                        f"Could not read the label of the file {name} from the CSV file {self.labels_path}. Please check that the column names provided in 'wsi_name_col' and 'wsi_label_col' are correct."
+                    )
+            else:
+                raise ValueError(
+                    "When providing a CSV file for labels_path, you must provide the column names for the WSI names and labels using the 'wsi_name_col' and 'wsi_label_col' arguments, respectively."
+                )
+            label = np.array(label)
+            return label
+
+
+
+
+marker = "BCL2" #Path of the directory
+base_path = os.path.join(marker, "job_dir", "20.0x_16px_0px_overlap")
+feat_extract = "conch_v15"
+bcl2_labels_path = "bcl2_torchmil.csv"
+patch_size = 16
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-patch_size = 16
-coords_dir = TRIDENT_DIR + r"\job_dir\20.0x_16px_0px_overlap\patches"
-patch_labels_dir = TRIDENT_DIR + r"\job_dir\20.0x_16px_0px_overlap\features_conch_v15"
-
-wsi_name = "13901"
-
-wsi_path = os.path.join(TIFF_DIR, wsi_name + ".tiff")
-slide = openslide.OpenSlide(wsi_path)
-
-
-coords_path = os.path.join(coords_dir, wsi_name + "_patches.h5")
-with h5py.File(coords_path, "r") as f:
-    print(list(f.keys()))
-inst_coords = h5py.File(coords_path, "r")["coords"][:]
-
-patch_features_path = os.path.join(patch_labels_dir, wsi_name + ".h5")
-print(patch_features_path)
-
-with h5py.File(patch_features_path, "r") as f:
-    print(list(f.keys()))
-    features = f["features"][:]   # ✅ au lieu de patch_labels
-
-print(f"Number of patches: {len(inst_coords)}")
-print(f"First 5 patch coordinates: {inst_coords[:5]}")
-
-slide_label_dict = {
-    "13901": 1,   # ex: positif
-    # "13902": 0, etc.
-}
-
-slide_label = slide_label_dict[wsi_name]
-
-
-if len(inst_coords) != len(features):
-    raise ValueError("Mismatch between number of patches and features")
-
-fig, axs = plt.subplots(1, 5, figsize=(20, 4))
-for i in range(5):
-    x, y = inst_coords[i]
-    patch_pil = slide.read_region((x, y), 0, (patch_size, patch_size))
-    patch = np.array(patch_pil)[:, :, :3]  # Convert to RGB
-    patch = cv2.resize(patch, (patch_size, patch_size))
-    axs[i].imshow(patch)
-    axs[i].set_xticks([])
-    axs[i].set_yticks([])
-    axs[i].set_title(
-    f"Patch {i+1}\n(x={x}, y={y})\nSlide Label={slide_label}",
-    fontsize=16
-    )
-plt.tight_layout()
-plt.show()
-
-
-#New cells 
-def read_wsi_patches(slide, inst_coords, patch_size=512, resize_size=50):
-    bag_len = len(inst_coords)
-    patches_list = []
-    row_list = []
-    column_list = []
-    for i in tqdm.tqdm(range(bag_len), desc="Reading_patches"):
-        x, y = inst_coords[i]
-        patch_pil = slide.read_region((x, y), 0, (patch_size, patch_size))
-        patch = np.array(patch_pil)[:, :, :3]  # Convert to RGB
-        patch_resized = cv2.resize(patch, (resize_size, resize_size))
-        patches_list.append(patch_resized)
-        row = int(y/ patch_size)
-        column = int(x/ patch_size)
-        row_list.append(row)
-        column_list.append(column)
-
-    row_array = np.array(row_list)
-    column_array = np.array(column_list)
-
-    row_array = row_array - row_array.min()
-    column_array = column_array - column_array.min()
-
-    return patches_list, row_array, column_array
-
-
-patches_list, row_array, column_array = read_wsi_patches(slide, inst_coords, patch_size=512, resize_size=50)
-
-
-
-
-#New cells
-from torchmil.datasets import TridentWSIDataset
-from sklearn.model_selection import train_test_split
-import pandas as pd
-
-
-patch_labels_path = TRIDENT_DIR + "patch_labels/"
-feature_extractor = "conch_v15"
-
-
-bcl2_labels_path = "bcl2_torchmil_test.csv"
 df_data = pd.read_csv(bcl2_labels_path)
+wsis = df_data[df_data["stain"] == "BCL2"]["new_patient_id"].astype(str).tolist()
 
-train_df = df_data[df_data["stain"] == "BCL2"]
-test_df = df_data[df_data["stain"] == "BCL2"]
-
-
-train_wsis = train_df["new_patient_id"].astype(str).tolist()
-
-test_wsis = test_df["new_patient_id"].astype(str).tolist()
-
-#Path to the features
-base_path = os.path.join(TRIDENT_DIR, "job_dir", "20.0x_16px_0px_overlap")
-
-
-dataset = TridentTMADataset(
-    base_path=base_path + r"\\", 
+dataset = TridentTMADatasetSLIDE(
+    base_path=base_path, 
     labels_path=bcl2_labels_path,
-    feature_extractor=feature_extractor,
-    patch_labels_path=patch_labels_path,
-    wsi_names=train_wsis,
+    feature_extractor=feat_extract,
+    patch_labels_path="slide",
+    wsi_names=wsis,
     bag_keys=["X", "Y", "y_inst", "adj", "coords"],
     patch_size=patch_size,
     load_at_init=True,
     wsi_name_col="new_patient_id",
     wsi_label_col="status",
-    )
+)
 
-dataset_test = TridentTMADataset(
-    base_path=base_path + r"\\",
-    labels_path=bcl2_labels_path,
-    feature_extractor=feature_extractor,
-    patch_labels_path=patch_labels_path,
-    wsi_names=test_wsis,
-    bag_keys=["X", "Y", "y_inst", "adj", "coords"],
-    patch_size=patch_size,
-    load_at_init=True,
-    wsi_name_col="wsi_name",
-    wsi_label_col="wsi_label",
-    )
-
-
+# Split Train/Val
 bag_labels = dataset.get_bag_labels()
 idx = list(range(len(bag_labels)))
-val_prop = 0.2
-idx_train, idx_val = train_test_split(idx, test_size=val_prop, random_state=42, stratify=bag_labels)
-train_dataset = dataset.subset(idx_train)
-val_dataset = dataset.subset(idx_val)
-test_dataset = dataset_test.subset(list(range(len(dataset_test))))
+idx_train, idx_val = train_test_split(idx, test_size=0.2, random_state=42, stratify=bag_labels)
 
-#Print one bag
-bag = train_dataset[0]
-print(f"Bag type:",type(bag))
-for key in bag.keys():
-    print(key, bag[key].shape)
-
-
-#New cells
-from torchmil.data import collate_fn
-
-batch_size = 1
-
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=collate_fn)
-
-
-it = iter(train_loader)
-batch = next(it)
-print(f"Batch type:", type(batch))
-for key in batch.keys():
-    print(key, batch[key].shape)
-
-
-#New cells
-from torchmil.nn import masked_softmax
-
+train_loader = DataLoader(dataset.subset(idx_train), batch_size=1, shuffle=True, collate_fn=collate_fn)
+val_loader = DataLoader(dataset.subset(idx_val), batch_size=1, shuffle=False, collate_fn=collate_fn)
 
 class ABMIL(torch.nn.Module):
-    def __init__(self, emb_dim, att_dim):
+    def __init__(self, emb_dim, att_dim, input_dim=768):
         super().__init__()
-
-        # Feature extractor
         self.mlp = torch.nn.Sequential(
-            torch.nn.Linear(28 * 28, 512),
-            torch.nn.ReLU(),
-            torch.nn.Linear(512, emb_dim),
+            torch.nn.Linear(input_dim, emb_dim),
+            torch.nn.ReLU()
         )
-
         self.fc1 = torch.nn.Linear(emb_dim, att_dim)
         self.fc2 = torch.nn.Linear(att_dim, 1)
-
         self.classifier = torch.nn.Linear(emb_dim, 1)
 
     def forward(self, X, mask, return_att=False):
-        X = self.mlp(X)  # (batch_size, bag_size, emb_dim)
-        H = torch.tanh(self.fc1(X))  # (batch_size, bag_size, att_dim)
-        att = torch.sigmoid(self.fc2(H))  # (batch_size, bag_size, 1)
-        att_s = masked_softmax(att, mask)  # (batch_size, bag_size, 1)
-        # att_s = torch.nn.functional.softmax(att, dim=1)
-        X = torch.bmm(att_s.transpose(1, 2), X).squeeze(1)  # (batch_size, emb_dim)
-        Y_pred = self.classifier(X).squeeze(1)  # (batch_size,)
-        if return_att:
-            return Y_pred, att_s
-        else:
-            return Y_pred
+        X = self.mlp(X)
+        H = torch.tanh(self.fc1(X))
+        att = torch.sigmoid(self.fc2(H))
+        att_s = masked_softmax(att, mask)
+        X_pooled = torch.bmm(att_s.transpose(1, 2), X).squeeze(1)
+        Y_pred = self.classifier(X_pooled)
+        return (Y_pred, att_s) if return_att else Y_pred
 
-
-model = ABMIL(emb_dim=256, att_dim=128)
-print(model)
-
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = ABMIL(emb_dim=256, att_dim=128)
+model = ABMIL(emb_dim=256, att_dim=128).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
-criterion = torch.nn.BCEWithLogitsLoss(reduction="mean")
+criterion = torch.nn.BCEWithLogitsLoss()
 
-model = model.to(device)
-criterion = criterion.to(device)  
+# --- LOOPS D'ENTRAÎNEMENT ET TEST ---
+def run_epoch(dataloader, mode="train"):
+    if mode == "train":
+        model.train()
+    else:
+        model.eval()
 
-def train(dataloader, epoch):
-    model.train()
-
-    sum_loss = 0.0
-    sum_correct = 0.0
+    sum_loss, sum_correct = 0.0, 0.0
     for batch in dataloader:
         batch = batch.to(device)
-        out = model(batch["X"], batch["mask"])
-        loss = criterion(out, batch["Y"].float())
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+        
+        with torch.set_grad_enabled(mode == "train"):
+            out = model(batch["X"], batch["mask"])
+            loss = criterion(out, batch["Y"].float())
+            
+            if mode == "train":
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
 
         sum_loss += loss.item()
         pred = (out > 0).float()
         sum_correct += (pred == batch["Y"]).sum().item()
-        sum_loss += loss.item()
 
-    print(
-        f"[Epoch {epoch}] Train, train/loss: {sum_loss / len(dataloader)}, 'train/bag/acc': {sum_correct / len(dataloader.dataset)}"
-    )
+    avg_loss = sum_loss / len(dataloader)
+    acc = sum_correct / len(dataloader.dataset)
+    print(f"[{mode.upper()}] Loss: {avg_loss:.4f}, Acc: {acc:.4f}")
 
-
-def val(dataloader, epoch):
-    model.eval()
-
-    sum_loss = 0.0
-    sum_correct = 0.0
-    for batch in dataloader:
-        batch = batch.to(device)
-        out = model(batch["X"], batch["mask"])
-        loss = criterion(out, batch["Y"].float())
-
-        sum_loss += loss.item()
-        pred = (out > 0).float()
-        sum_correct += (pred == batch["Y"]).sum().item()
-        sum_loss += loss.item()
-
-    print(
-        f"[Epoch {epoch}] Validation, val/loss: {sum_loss / len(dataloader)}, 'val/bag/acc': {sum_correct / len(dataloader.dataset)}"
-    )
-
-
-model = model.to(device)
-for epoch in range(20):
-    train(train_loader, epoch + 1)
-    val(test_loader, epoch + 1)
-
-
-#New cells 
-from torchmil.visualize import patches_to_canvas, draw_heatmap_wsi
-
-canvas = patches_to_canvas(patches_list, row_array, column_array, 50)
-
-canvas_with_patch_labels = draw_heatmap_wsi(canvas, features, 50, row_array, column_array)
-
-fig, axs = plt.subplots(1, 2, figsize=(6, 6))
-axs[0].imshow(canvas)
-axs[0].set_title("TMA", fontsize=16)
-axs[1].imshow(canvas_with_patch_labels)
-axs[1].set_title("TMA with Patch Labels", fontsize=16)
-for ax in axs:
-    ax.set_xticks([])
-    ax.set_yticks([])
-plt.tight_layout()
-plt.show()
+for epoch in range(1, 21):
+    print(f"Epoch {epoch}")
+    run_epoch(train_loader, "train")
+    run_epoch(val_loader, "val")
